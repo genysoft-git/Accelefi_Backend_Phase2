@@ -1,20 +1,22 @@
 const mysql = require("mysql2");
 
 const config = {
-  host: "localhost",
-  user: "root",
-  password: "sysadmin",
-  database: "accelefidb",
+  host: "digitaldealer.cha9iskvgvwx.us-west-2.rds.amazonaws.com",
+  user: "admin",
+  password: "hG7%Lkl0q",
+  database: "digital_staging",
   port: "3306",
+  connectionTimeout: 10000,
 };
 
-const conn = new mysql.createConnection(config);
+const connection = new mysql.createConnection(config);
 
-conn.connect(function (err) {
+connection.connect(function (err) {
   if (err) {
     console.log("! Connection not established:", err);
   } else {
     console.log("Connection established");
   }
 });
-console.log(config);
+
+exports.databaseConnection = connection;
