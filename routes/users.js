@@ -26,7 +26,8 @@ join user b on a.customer_Createdby=b.id
 });
 
 router.get("/managers", function (req, res, next) {
-  let sql = "select * from customerverification";
+  let sql =
+    "select concat(user_Firstname,' ',user_Lastname) as FinanaceMgr,user_Location from user where user_Role=9";
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
