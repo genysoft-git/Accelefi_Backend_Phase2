@@ -14,11 +14,10 @@ router.get("/", function (req, res, next) {
   concat(b.user_Firstname,' ',b.user_Lastname) as SalesPerson,
   if (a.customer_Status=1,'Active','InActive') as Status,
   a.customer_Purchasetype,
-  a.customer_Miles,a.customer_Msrp,
-  df.total_price_after_protection,dp.product_value,pp.productName,pp.productType,df.total_price_after_protection,df.new_payment
+  a.customer_Miles,a.customer_Msrp
 FROM customerverification a
 join user b on a.customer_Createdby=b.id
-join deal_finalpayment df on df.deal_number=a.customer_Dealnumber left join deal_products dp on a.customer_Dealnumber=dp.deal_number left join pen_products as pp on dp.productID=pp.productID group by a.customer_Dealnumber`;
+`;
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
@@ -51,7 +50,8 @@ router.get("/salesmanagers", function (req, res, next) {
   });
 });
 router.get("/lender", function (req, res, next) {
-  let sql = "select lender from deal_closed;";
+  let sql =
+    "select distinct( dp.deal_number),dp.product_value,pp.productName,pp.productType,df.total_price_after_protection,df.new_payment from deal_products dp left join deal_finalpayment df on dp.deal_number=df.deal_number left join pen_products as pp on dp.productID=pp.productID";
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
