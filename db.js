@@ -4,7 +4,7 @@ const config = {
   host: "digitaldealer.cha9iskvgvwx.us-west-2.rds.amazonaws.com",
   user: "admin",
   password: "hG7%Lkl0q",
-  database: "digital_staging",
+  database: "digital_sandbox",
   port: "3306",
   connectionTimeout: 10000,
 };
