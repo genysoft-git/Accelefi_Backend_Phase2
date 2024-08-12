@@ -35,7 +35,8 @@ router.get("/managers", function (req, res, next) {
   });
 });
 router.get("/salesperson", function (req, res, next) {
-  let sql = "select sales_Person from deal_closed";
+  let sql =
+    "select concat(user_Firstname,' ',user_Lastname) as SalesPrsn,user_Location from user where user_Role=11;";
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
@@ -43,7 +44,8 @@ router.get("/salesperson", function (req, res, next) {
   });
 });
 router.get("/salesmanagers", function (req, res, next) {
-  let sql = "select sales_Manager from deal_closed;";
+  let sql =
+    "select concat(user_Firstname,' ',user_Lastname) as SalesMgr,user_Location from user where user_Role=7;;";
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
