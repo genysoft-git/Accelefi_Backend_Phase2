@@ -62,7 +62,8 @@ router.get("/lender", function (req, res, next) {
   });
 });
 router.get("/rate", function (req, res, next) {
-  let sql = "select rate_Deviationreason from deal_closed;";
+  let sql =
+    "select ml.purchase_lenderid,ml.purchase_lendername,ml.purchase_lendernumber,ml.purchase_lenderaddress,lm.location_id,lm.id,lm.lenders_id,ml.book_forusedcarvalue from lender_mapping lm left join master_lender ml on ml.purchase_lenderid=lm.lenders_id";
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
