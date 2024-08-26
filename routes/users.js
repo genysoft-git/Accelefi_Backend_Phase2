@@ -102,8 +102,14 @@ router.post("/closeDeal", (req, res) => {
     loanToValue,
     qualifiedUnit,
     selectedReason,
+    selectedButton,
   } = req.body;
-  const sql_query = `update customerverification set customer_Status=0 where customer_Dealnumber='${dealNumber}';`;
+  let sql_query;
+  if (selectedButton === "close") {
+    sql_query = `update customerverification set customer_Status=0 where customer_Dealnumber='${dealNumber}';`;
+  } else {
+    sql_query = `update customerverification set customer_Status=2 where customer_Dealnumber='${dealNumber}';`;
+  }
 
   connection.query(sql_query, (err, results) => {
     if (err) throw err;
