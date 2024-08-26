@@ -7,7 +7,7 @@ router.get("/", function (req, res, next) {
   a.customer_Year,
   a.customer_Make,
   a.customer_Model,
-  a.customer_Stylename,a.customer_TotalAmountFinanced,
+  a.customer_Stylename,a.customer_TotalAmountFinanced,CT.customer_trademake,CT.customer_tradeyear,CT.customer_trademodel,CT.customer_Trademiles,
   Date(a.customer_Dealdate) as Date,
   a.customer_Vin,a.customer_Dealnumber ,a.customer_Vehicletype,
   concat(b.user_Firstname,' ',b.user_Lastname) as FinanaceMgr,
@@ -17,6 +17,7 @@ router.get("/", function (req, res, next) {
   a.customer_Miles,a.customer_Msrp
 FROM customerverification a
 join user b on a.customer_Createdby=b.id
+join customerverification_tradeinfo CT on CT.customerverification_id=a.customer_Id
 `;
 
   connection.query(sql, (err, results) => {
