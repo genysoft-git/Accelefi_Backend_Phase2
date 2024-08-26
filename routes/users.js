@@ -7,7 +7,7 @@ router.get("/", function (req, res, next) {
   a.customer_Year,
   a.customer_Make,
   a.customer_Model,
-  a.customer_Stylename,
+  a.customer_Stylename,a.customer_TotalAmountFinanced,
   Date(a.customer_Dealdate) as Date,
   a.customer_Vin,a.customer_Dealnumber ,a.customer_Vehicletype,
   concat(b.user_Firstname,' ',b.user_Lastname) as FinanaceMgr,
@@ -78,5 +78,44 @@ router.get("/reserve", function (req, res, next) {
     res.send(results);
   });
 });
+router.post("/closeDeal", (req, res) => {
+  console.log(req.body);
+  let {
+    dealNumber,
+    buyRate,
+    totalGross,
+    backGross,
+    selectedValue,
+    lender,
+    creditScore,
+    frontGross,
+    financeReserve,
+    valueMethod,
+    vehicleValue,
+    sellRate,
+    reserve_amount,
+    financeManagerDropdown,
+    salesPersonDropdown,
+    salesManagerDropdown,
+    notes,
+    loanToValue,
+    qualifiedUnit,
+    selectedReason,
+  } = req.body;
+  const sql_query = `update customerverification set customer_Status=0 where customer_Dealnumber='${dealNumber}';`;
 
+  connection.query(sql_query, (err, results) => {
+    if (err) throw err;
+    if (results.affectedRows === 1) {
+      const sql_query = `insert into closed_deal (back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,front_gross,lender,loan_to_value,notes,purchase_type,qulified_unit,reserve_method,
+reserve_method_value,sales_mgr,sales_person,sell_rate,total_gross,value_method,vehicle_value,rate_deviation_reason) values ('${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown.FinanaceMgr}',${financeReserve},${frontGross},'${lender.purchase_lendername}','${loanToValue}','${notes}','','${qualifiedUnit[0]}','${selectedValue}',${reserve_amount},'${salesManagerDropdown.SalesMgr}','${salesPersonDropdown.SalesPrsn}',${sellRate},${totalGross},'${valueMethod}',${vehicleValue},'${selectedReason}')`;
+      connection.query(sql_query, (err, results) => {
+        if (err) throw err;
+        res.send(results);
+      });
+    } else {
+      res.send(results);
+    }
+  });
+});
 module.exports = router;
