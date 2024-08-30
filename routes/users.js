@@ -164,4 +164,14 @@ router.post("/closeDeal", (req, res) => {
     }
   });
 });
+
+router.get("/reactivatedeal", (req, res) => {
+  const sql_query =
+    "select CD.*,CV.customer_Make,CV.customer_Model,CV.customer_Dealnumber,CV.customer_Vehicletype,CV.customer_Purchasetype,CV.customer_Vehicletype,CT.customer_trademake,CT.customer_tradeyear,CT.customer_trademodel,CT.customer_Trademiles from closed_deal as CD left join customerverification as CV on CD.deal_no=CV.customer_Dealnumber left join customerverification_tradeinfo CT on CV.customer_Id = CT.customerverification_id;";
+  connection.query(sql_query, (err, results) => {
+    if (err) throw err;
+    res.send(results);
+  });
+  console.log("reactivated");
+});
 module.exports = router;
