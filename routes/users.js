@@ -80,7 +80,6 @@ router.get("/reserve", function (req, res, next) {
   });
 });
 router.post("/closeDeal", (req, res) => {
-  console.log(req.body);
   let {
     dealNumber,
     buyRate,
@@ -103,6 +102,7 @@ router.post("/closeDeal", (req, res) => {
     qualifiedUnit,
     selectedReason,
     selectedButton,
+    date,
   } = req.body;
   let sql_query;
   if (selectedButton === "close") {
@@ -134,7 +134,7 @@ router.post("/closeDeal", (req, res) => {
       total_gross,
       vehicle_value,
       value_method,
-      rate_deviation_reason) values (
+      rate_deviation_reason,closed_deal_date) values (
       '${backGross}',
       ${buyRate},
       ${creditScore},
@@ -154,7 +154,7 @@ router.post("/closeDeal", (req, res) => {
       ${totalGross},
       ${vehicleValue},
       '${valueMethod}',
-      '${selectedReason}')`;
+      '${selectedReason}','${date}')`;
       connection.query(sql_query, (err, results) => {
         if (err) throw err;
         res.send(results);
@@ -172,6 +172,19 @@ router.get("/reactivatedeal", (req, res) => {
     if (err) throw err;
     res.send(results);
   });
-  console.log("reactivated");
+});
+router.post("/reactive", (req, res) => {
+  const { dealNumber, selectedButton } = req.body;
+  let sql_query;
+  if (selectedButton === "active") {
+    sql_query = `update customerverification set customer_Status=1 where customer_Dealnumber='${dealNumber}';`;
+  } else {
+    sql_query = `update customerverification set customer_Status=2 where customer_Dealnumber='${dealNumber}';`;
+  }
+
+  connection.query(sql_query, (err, results) => {
+    if (err) throw err;
+    res.send(results);
+  });
 });
 module.exports = router;
