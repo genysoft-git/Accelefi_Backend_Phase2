@@ -80,6 +80,8 @@ router.get("/reserve", function (req, res, next) {
   });
 });
 router.post("/closeDeal", (req, res) => {
+  console.log(req.body);
+
   let {
     dealNumber,
     buyRate,
@@ -103,6 +105,7 @@ router.post("/closeDeal", (req, res) => {
     selectedReason,
     selectedButton,
     date,
+    outsideLender,
   } = req.body;
   let sql_query;
   if (selectedButton === "close") {
@@ -134,7 +137,7 @@ router.post("/closeDeal", (req, res) => {
       total_gross,
       vehicle_value,
       value_method,
-      rate_deviation_reason,closed_deal_date) values (
+      rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender) values (
       '${backGross}',
       ${buyRate},
       ${creditScore},
@@ -154,7 +157,9 @@ router.post("/closeDeal", (req, res) => {
       ${totalGross},
       ${vehicleValue},
       '${valueMethod}',
-      '${selectedReason}','${date}')`;
+      '${selectedReason}','${date}','${
+        outsideLender.isYesChecked ? "Yes" : "No"
+      }','${outsideLender.outSideLender}')`;
       connection.query(sql_query, (err, results) => {
         if (err) throw err;
         res.send(results);
