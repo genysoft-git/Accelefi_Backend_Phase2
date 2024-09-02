@@ -80,8 +80,6 @@ router.get("/reserve", function (req, res, next) {
   });
 });
 router.post("/closeDeal", (req, res) => {
-  console.log(req.body);
-
   let {
     dealNumber,
     buyRate,
