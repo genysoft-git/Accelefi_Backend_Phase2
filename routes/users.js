@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const PDFDocument = require("pdfkit");
+const ExcelJS = require("exceljs");
 const connection = require("../db.js").databaseConnection;
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -188,6 +190,132 @@ router.post("/reactive", (req, res) => {
   connection.query(sql_query, (err, results) => {
     if (err) throw err;
     res.send(results);
+  });
+});
+
+router.get("/reports", (req, res) => {
+  const format = req.query.format;
+  let sp_query = `CALL GetReports(@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve);`;
+  connection.query(sp_query, (err, results) => {
+    if (err) throw err;
+    console.log(results);
+
+    if (format === "PDF") {
+      console.log("setp 1");
+      const doc = new PDFDocument();
+      let buffers = [];
+
+      doc.on("data", buffers.push.bind(buffers));
+      doc.on("end", function () {
+        console.log("step 4");
+        const pdfBuffer = Buffer.concat(buffers);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "attachment; filename=report.pdf");
+        res.send(pdfBuffer);
+      });
+
+      doc.fontSize(25).text("Finance Summary Report");
+      doc.moveDown();
+
+      const tableTop = 100;
+      const rowHeight = 20;
+      // const colWidths = [80, 80, 80, 100, 100];
+
+      // Titles of the columns
+      doc.fontSize(12).text("New", 200, tableTop);
+      doc.text("Used", 230, tableTop);
+      doc.text("Total", 260, tableTop);
+      doc.text("Adjustments", 300, tableTop);
+      doc.text("Adj. Total", 370, tableTop);
+
+      // Add table rows
+      const data = [
+        {
+          category: "Total Units",
+          new: results[0][0].new_count,
+          used: results[0][0].used_count,
+          total: results[0][0].new_count + results[0][0].used_count,
+          adjustments: "",
+          adjTotal: "",
+        },
+        {
+          category: "Qualified Units",
+          new: results[0][0].new_qualified_count,
+          used: results[0][0].used_qualified_count,
+          total:
+            JSON.parse(results[0][0].used_qualified_count) +
+            JSON.parse(results[0][0].used_qualified_count),
+          adjustments: "",
+          adjTotal: "",
+        },
+        {
+          category: "Cash",
+          new: results[0][0].new_cash_count,
+          used: results[0][0].used_cash_count,
+          total:
+            JSON.parse(results[0][0].new_cash_count) +
+            JSON.parse(results[0][0].used_cash_count),
+          adjustments: "",
+          adjTotal: "",
+        },
+        {
+          category: "Finance",
+          new: results[0][0].new_finance_count,
+          used: results[0][0].used_finance_count,
+          total:
+            JSON.parse(results[0][0].new_finance_count) +
+            JSON.parse(results[0][0].used_finance_count),
+          adjustments: "",
+          adjTotal: "",
+        },
+        {
+          category: "Lease",
+          new: results[0][0].lease_count || 0,
+          used: results[0][0].lease_count || 0,
+          total:
+            JSON.parse(results[0][0].lease_count) +
+              JSON.parse(results[0][0].lease_count) || 0,
+          adjustments: "",
+          adjTotal: "",
+        },
+      ];
+
+      let rowY = tableTop + rowHeight;
+      data.forEach((row) => {
+        doc.text(row.category, 40, rowY);
+        doc.text(row.new, 200, rowY);
+        doc.text(row.used, 230, rowY);
+        doc.text(row.total, 260, rowY);
+        doc.text(row.adjustments, 300, rowY);
+        doc.text(row.adjTotal, 370, rowY);
+        rowY += rowHeight;
+      });
+      doc.end();
+    } else if (format === "Excel") {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Report");
+
+      worksheet.columns = [
+        { header: "Column 1", key: "col1" },
+        { header: "Column 2", key: "col2" },
+      ];
+
+      // Add some data to the worksheet
+      worksheet.addRow({ col1: "Data 1", col2: "Data 2" });
+
+      const buffer = workbook.xlsx.writeBuffer();
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="report.xlsx"'
+      );
+      res.send(buffer);
+    } else {
+      res.status(400).send("Invalid request");
+    }
   });
 });
 module.exports = router;
