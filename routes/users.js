@@ -118,51 +118,24 @@ router.post("/closeDeal", (req, res) => {
     if (err) throw err;
     if (results.affectedRows === 1) {
       const sql_query = `insert into closed_deal (
-      back_gross,
-      buy_rate,
-      credit_score,
-      deal_no,
-      finance_mgr,
-      finance_reserve,
-      front_gross,
-      lender,
-      loan_to_value,
-      notes,
-      qulified_unit,
-      reserve_method,
-      reserve_method_value,
-      sales_mgr,
-      sales_person,
-      sell_rate,
-      total_gross,
-      vehicle_value,
-      value_method,
-      rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender) values (
-      '${backGross}',
-      ${buyRate},
-      ${creditScore},
-      '${dealNumber}',
-      '${financeManagerDropdown}',
-      ${financeReserve},
-      ${frontGross},
-      '${lender}',
-      '${loanToValue}',
-      '${notes}',
-      '${qualifiedUnit}',
-      '${selectedValue}',
-      '${reserve_amount}',
-      '${salesManagerDropdown}',
-      '${salesPersonDropdown}',
-      ${sellRate},
-      ${totalGross},
-      ${vehicleValue},
-      '${valueMethod}',
-      '${selectedReason}','${new Date(date)
+      back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,front_gross,lender,loan_to_value,notes,qulified_unit,reserve_method,reserve_method_value,sales_mgr,sales_person,
+      sell_rate,total_gross,vehicle_value,value_method,rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender)
+      values (
+      '${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown}',${financeReserve},${frontGross},'${lender}','${loanToValue}','${notes}','${qualifiedUnit}','${selectedValue}','${reserve_amount}','${salesManagerDropdown}','${salesPersonDropdown}',${sellRate},${totalGross},${vehicleValue},'${valueMethod}','${selectedReason}','${new Date(
+        date
+      )
         .toISOString()
         .slice(0, 10)
         .replace("T", " ")}','${outsideLender.isYesChecked ? "Yes" : "No"}','${
         outsideLender.outSideLender
-      }')`;
+      }') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
+        date
+      )
+        .toISOString()
+        .slice(0, 10)
+        .replace("T", " ")}',is_out_side_lender='${
+        outsideLender.isYesChecked ? "Yes" : "No"
+      }',out_side_lender='${outsideLender.outSideLender}'`;
       connection.query(sql_query, (err, results) => {
         if (err) throw err;
         res.send(results);
