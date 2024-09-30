@@ -181,7 +181,7 @@ router.post("/reports", (req, res) => {
     .slice(
       0,
       10
-    )}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve);`;
+    )}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal );`;
 
   console.log(sp_query);
 
