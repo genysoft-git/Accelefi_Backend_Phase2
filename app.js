@@ -7,7 +7,7 @@ const dotenv = require("dotenv");
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const cors = require("./cors");
-
+// import https from "https";
 dotenv.config();
 const app = express();
 
@@ -23,6 +23,17 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+
+//Create Https server
+// const PORT = 9000;
+// const options = {
+//   key:'/etc/ssl/certificate/servernew.key',
+//   cert:'/etc/ssl/certificate/cea836e5c7d62b36.crt'
+// }
+// https.createServer(options,app).listen(PORT,function(req,res){
+//   console.log('Server start on Port',PORT);
+
+// })
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
