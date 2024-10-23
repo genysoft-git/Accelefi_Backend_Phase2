@@ -106,6 +106,7 @@ router.post("/closeDeal", (req, res) => {
     selectedButton,
     date,
     outsideLender,
+    vehicleType,
   } = req.body;
   let sql_query;
   if (selectedButton === "close") {
@@ -119,7 +120,7 @@ router.post("/closeDeal", (req, res) => {
     if (results.affectedRows === 1) {
       const sql_query = `insert into closed_deal (
       back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,front_gross,lender,loan_to_value,notes,qulified_unit,reserve_method,reserve_method_value,sales_mgr,sales_person,
-      sell_rate,total_gross,vehicle_value,value_method,rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender)
+      sell_rate,total_gross,vehicle_value,value_method,rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender,vehicle_type)
       values (
       '${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown}',${financeReserve},${frontGross},'${lender}','${loanToValue}','${notes}','${qualifiedUnit}','${selectedValue}','${reserve_amount}','${salesManagerDropdown}','${salesPersonDropdown}',${sellRate},${totalGross},${vehicleValue},'${valueMethod}','${selectedReason}','${new Date(
         date
@@ -128,14 +129,16 @@ router.post("/closeDeal", (req, res) => {
         .slice(0, 10)
         .replace("T", " ")}','${outsideLender.isYesChecked ? "Yes" : "No"}','${
         outsideLender.outSideLender
-      }') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
+      }','${vehicleType}') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
         date
       )
         .toISOString()
         .slice(0, 10)
         .replace("T", " ")}',is_out_side_lender='${
         outsideLender.isYesChecked ? "Yes" : "No"
-      }',out_side_lender='${outsideLender.outSideLender}'`;
+      }',out_side_lender='${
+        outsideLender.outSideLender
+      }',vehicle_type='${vehicleType}'`;
       connection.query(sql_query, (err, results) => {
         if (err) throw err;
         res.send(results);
@@ -170,25 +173,40 @@ router.post("/reactive", (req, res) => {
 });
 
 router.post("/reports", (req, res) => {
-  console.log(req.body);
+  let reportResult = null;
+  let financeResult = null;
 
+  const checkAndRespond = () => {
+    if (reportResult && financeResult) {
+      // If both results are ready, respond with the combined data
+      res.send({
+        report: reportResult,
+        finance: financeResult,
+      });
+    }
+  };
   const { startDate, endDate, purchaseType, vehicleType } = req.body;
 
-  let sp_query = `CALL GetReports('${new Date(startDate)
-    .toISOString()
-    .slice(0, 10)}','${new Date(endDate)
-    .toISOString()
-    .slice(
-      0,
-      10
-    )}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal );`;
+  const formattedStartDate = new Date(startDate).toISOString().slice(0, 10);
+  const formattedEndDate = new Date(endDate).toISOString().slice(0, 10);
 
-  console.log(sp_query);
+  let finance_query = `call GetFinance('${formattedStartDate}','${formattedEndDate}');
+`;
 
-  connection.query(sp_query, (err, results) => {
+  let report_query = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal );`;
+
+  connection.query(report_query, (err, report_results) => {
+    if (err) throw err;
+    console.log(report_results);
+    reportResult = report_results[0][0];
+    checkAndRespond();
+  });
+
+  connection.query(finance_query, (err, results) => {
     if (err) throw err;
     console.log(results);
-    res.send(results);
+    financeResult = results[0];
+    checkAndRespond();
   });
 });
 module.exports = router;
