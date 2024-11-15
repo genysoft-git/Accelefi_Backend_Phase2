@@ -173,6 +173,8 @@ router.post("/reactive", (req, res) => {
 });
 
 router.post("/reports", (req, res) => {
+  console.log(req.body);
+
   let reportResult = null;
   let financeResult = null;
 
@@ -197,16 +199,77 @@ router.post("/reports", (req, res) => {
 
   connection.query(report_query, (err, report_results) => {
     if (err) throw err;
-    console.log(report_results);
+    // console.log(report_results);
     reportResult = report_results[0][0];
     checkAndRespond();
   });
 
   connection.query(finance_query, (err, results) => {
     if (err) throw err;
-    console.log(results);
+    // console.log(results);
     financeResult = results[0];
     checkAndRespond();
+  });
+});
+
+router.post("/org", (req, res) => {
+  console.log(req.body);
+
+  const { id, org } = req.body;
+  let user_Role = null;
+  let sql_query = `select * from user where id=${id}`;
+  connection.query(sql_query, (err, results) => {
+    let query;
+    if (err) throw err;
+    user_Role = results[0].user_Role;
+    if (user_Role === 1) {
+      query = `select id,org_name from manage_organization where is_deleted=0`;
+    } else {
+      query = `select id,org_name from manage_organization where is_deleted=0 and id=${org}`;
+    }
+    console.log(query);
+
+    connection.query(query, (err, results) => {
+      if (err) throw err;
+
+      res.send({
+        user_Role: user_Role,
+        organization: results,
+      });
+    });
+  });
+});
+router.post("/dealership", (req, res) => {
+  const { dealer } = req.body;
+
+  const dealership_query = `select location_Id,organization_id,location_Name from location where organization_id=${dealer} and is_deleted=0;`;
+  connection.query(dealership_query, (err, results) => {
+    if (err) throw err;
+
+    res.send({ dealership: results });
+  });
+});
+router.post("/dealerusers", (req, res) => {
+  const { location } = req.body;
+
+  const dealership_query = `SELECT
+ concat(user_Firstname, '',
+  user_Lastname) as name, user_Role,
+  CASE
+    WHEN user_Role = 9 THEN 'Finance Manager'
+    WHEN user_Role = 7 THEN 'Sales Manager'
+    WHEN user_Role = 11 THEN 'Sales Person'
+    ELSE 'Unknown Role'
+  END AS user_Role_Label,
+  user_Location
+FROM user
+WHERE user_Role IN (9, 7, 11)
+  AND user_Location = ${location}
+  AND is_deleted = 0;`;
+  connection.query(dealership_query, (err, results) => {
+    if (err) throw err;
+
+    res.send({ dealership: results });
   });
 });
 module.exports = router;
