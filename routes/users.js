@@ -172,43 +172,110 @@ router.post("/reactive", (req, res) => {
   });
 });
 
+// router.post("/reports", (req, res) => {
+//   console.log(req.body);
+
+//   let reportResult = null;
+//   let financeResult = null;
+
+//   const { startDate, endDate, purchaseType, vehicleType, createdUserId } =
+//   req.body;
+
+//   const formattedStartDate = new Date(startDate).toISOString().slice(0, 10);
+//   const formattedEndDate = new Date(endDate).toISOString().slice(0, 10);
+//   const checkAndRespond = () => {
+//     if (reportResult && financeResult) {
+//       // If both results are ready, respond with the combined data
+//       res.send({
+//         report: reportResult,
+//         finance: financeResult,
+//       });
+//     }
+//   };
+
+//   let finance_query = `call GetFinance('${formattedStartDate}','${formattedEndDate}','${createdUserId}');
+// `;
+
+//   let report_query = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${createdUserId}' );`;
+
+//   connection.query(report_query, (err, report_results) => {
+//     if (err) throw err;
+//     // console.log(report_results);
+//     reportResult = report_results[0][0];
+//     checkAndRespond();
+//   });
+
+//   connection.query(finance_query, (err, results) => {
+//     if (err) throw err;
+//     // console.log(results);
+//     financeResult = results[0];
+//     checkAndRespond();
+//   });
+// });
+
 router.post("/reports", (req, res) => {
   console.log(req.body);
 
-  let reportResult = null;
-  let financeResult = null;
-
-  const checkAndRespond = () => {
-    if (reportResult && financeResult) {
-      // If both results are ready, respond with the combined data
-      res.send({
-        report: reportResult,
-        finance: financeResult,
-      });
-    }
-  };
-  const { startDate, endDate, purchaseType, vehicleType } = req.body;
+  const { startDate, endDate, purchaseType, vehicleType, createdUserId } =
+    req.body;
+  console.log(req.body);
 
   const formattedStartDate = new Date(startDate).toISOString().slice(0, 10);
   const formattedEndDate = new Date(endDate).toISOString().slice(0, 10);
+  const userIds = createdUserId.split(","); // Split createdUserId into an array
+  console.log(userIds);
 
-  let finance_query = `call GetFinance('${formattedStartDate}','${formattedEndDate}');
-`;
+  const results = {}; // Key-value pair to store responses for each user
 
-  let report_query = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal );`;
+  let completedRequests = 0; // To track when all requests are done
 
-  connection.query(report_query, (err, report_results) => {
-    if (err) throw err;
-    // console.log(report_results);
-    reportResult = report_results[0][0];
-    checkAndRespond();
-  });
+  userIds.forEach((userId) => {
+    let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${userId}');`;
 
-  connection.query(finance_query, (err, results) => {
-    if (err) throw err;
-    // console.log(results);
-    financeResult = results[0];
-    checkAndRespond();
+    let reportQuery = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${userId}');`;
+
+    let financeResult = null;
+    let reportResult = null;
+
+    // Query for finance data
+    connection.query(financeQuery, (err, financeResults) => {
+      if (err) throw err;
+      financeResult = financeResults[0];
+
+      // Check if both queries are complete for this userId
+      if (financeResult && reportResult) {
+        results[userId] = {
+          finance: financeResult,
+          report: reportResult,
+        };
+        completedRequests++;
+
+        // Check if all user IDs have been processed
+        if (completedRequests === userIds.length) {
+          res.send(results); // Send final response
+        }
+      }
+    });
+
+    // Query for report data
+    connection.query(reportQuery, (err, reportResults) => {
+      if (err) throw err;
+      reportResult = reportResults[0][0];
+
+      // Check if both queries are complete for this userId
+      if (financeResult && reportResult) {
+        results[userId] = {
+          finance: financeResult,
+          report: reportResult,
+        };
+        completedRequests++;
+
+        // Check if all user IDs have been processed
+        if (completedRequests === userIds.length) {
+          res.send(results); // Send final response
+        }
+      }
+    });
   });
 });
 
@@ -252,7 +319,7 @@ router.post("/dealership", (req, res) => {
 router.post("/dealerusers", (req, res) => {
   const { location } = req.body;
 
-  const dealership_query = `SELECT
+  const dealership_query = `SELECT id,
  concat(user_Firstname, '',
   user_Lastname) as name, user_Role,
   CASE
