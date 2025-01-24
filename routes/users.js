@@ -9,7 +9,7 @@ router.get("/", function (req, res, next) {
   a.customer_Year,
   a.customer_Make,
   a.customer_Model,
-  a.customer_Stylename,a.customer_TotalAmountFinanced,CT.customer_trademake,CT.customer_tradeyear,CT.customer_trademodel,CT.customer_Trademiles,
+  a.customer_Stylename,a.customer_TotalAmountFinanced,a.residual_value,a.customer_Term,CT.customer_trademake,CT.customer_tradeyear,CT.customer_trademodel,CT.customer_Trademiles,
   Date(a.customer_Dealdate) as Date,
   a.customer_Vin,a.customer_Dealnumber ,a.customer_Vehicletype,
   concat(b.user_Firstname,' ',b.user_Lastname) as FinanaceMgr,
@@ -48,7 +48,7 @@ router.get("/salesperson", function (req, res, next) {
 });
 router.get("/salesmanagers", function (req, res, next) {
   let sql =
-    "select concat(user_Firstname,' ',user_Lastname) as SalesMgr,user_Location from user where user_Role=7;;";
+    "select concat(user_Firstname,' ',user_Lastname) as SalesMgr,user_Location from user where user_Role=7;";
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
@@ -92,6 +92,7 @@ router.post("/closeDeal", (req, res) => {
     creditScore,
     frontGross,
     financeReserve,
+    leaseReserve,
     valueMethod,
     vehicleValue,
     sellRate,
@@ -119,17 +120,17 @@ router.post("/closeDeal", (req, res) => {
     if (err) throw err;
     if (results.affectedRows === 1) {
       const sql_query = `insert into closed_deal (
-      back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,front_gross,lender,loan_to_value,notes,qulified_unit,reserve_method,reserve_method_value,sales_mgr,sales_person,
+      back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,lease_reserve,front_gross,lender,loan_to_value,notes,qulified_unit,reserve_method,reserve_method_value,sales_mgr,sales_person,
       sell_rate,total_gross,vehicle_value,value_method,rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender,vehicle_type)
       values (
-      '${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown}',${financeReserve},${frontGross},'${lender}','${loanToValue}','${notes}','${qualifiedUnit}','${selectedValue}','${reserve_amount}','${salesManagerDropdown}','${salesPersonDropdown}',${sellRate},${totalGross},${vehicleValue},'${valueMethod}','${selectedReason}','${new Date(
+      '${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown}',${financeReserve},${leaseReserve},${frontGross},'${lender}','${loanToValue}','${notes}','${qualifiedUnit}','${selectedValue}','${reserve_amount}','${salesManagerDropdown}','${salesPersonDropdown}',${sellRate},${totalGross},${vehicleValue},'${valueMethod}','${selectedReason}','${new Date(
         date
       )
         .toISOString()
         .slice(0, 10)
         .replace("T", " ")}','${outsideLender.isYesChecked ? "Yes" : "No"}','${
         outsideLender.outSideLender
-      }','${vehicleType}') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
+      }','${vehicleType}') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},finance_reserve=${leaseReserve},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
         date
       )
         .toISOString()
@@ -319,20 +320,26 @@ router.post("/dealership", (req, res) => {
 router.post("/dealerusers", (req, res) => {
   const { location } = req.body;
 
-  const dealership_query = `SELECT id,
- concat(user_Firstname, '',
-  user_Lastname) as name, user_Role,
+  const dealership_query = `SELECT U.id,
+ concat(U.user_Firstname, '',
+  U.user_Lastname) as name, U.user_Role,
   CASE
-    WHEN user_Role = 9 THEN 'Finance Manager'
-    WHEN user_Role = 7 THEN 'Sales Manager'
-    WHEN user_Role = 11 THEN 'Sales Person'
+    WHEN U.user_Role = 9 THEN 'Finance Manager'
+    WHEN U.user_Role = 7 THEN 'Sales Manager'
+    WHEN U.user_Role = 11 THEN 'Sales Person'
+    WHEN U.user_Role = 2 THEN 'Administrator'
     ELSE 'Unknown Role'
   END AS user_Role_Label,
-  user_Location
-FROM user
-WHERE user_Role IN (9, 7, 11)
-  AND user_Location = ${location}
-  AND is_deleted = 0;`;
+  U.user_Location
+FROM user U
+WHERE U.user_Role IN (9, 7, 11,2)
+  AND U.user_Location = ${location}
+  AND U.is_deleted = 0
+  AND EXISTS (
+    SELECT 1
+    FROM closed_deal CD
+    WHERE CD.finance_mgr = CONCAT(U.user_Firstname, ' ', U.user_Lastname)
+  );`;
   connection.query(dealership_query, (err, results) => {
     if (err) throw err;
 
