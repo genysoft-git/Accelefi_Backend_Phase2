@@ -1,7 +1,5 @@
 const express = require("express");
 const router = express.Router();
-// const PDFDocument = require("pdfkit");
-const ExcelJS = require("exceljs");
 const connection = require("../db.js").databaseConnection;
 /* GET users listing. */
 router.get("/", function (req, res, next) {
