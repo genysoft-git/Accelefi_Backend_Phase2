@@ -54,8 +54,27 @@ router.get("/salesmanagers", function (req, res, next) {
   });
 });
 router.get("/lender", function (req, res, next) {
-  let sql =
-    "select distinct( dp.deal_number),dp.product_value,pp.productName,pp.productType,df.total_price_after_protection,df.new_payment from deal_products dp left join deal_finalpayment df on dp.deal_number=df.deal_number left join pen_products as pp on dp.productID=pp.productID";
+  let sql = `SELECT
+    dp.*,
+    pp.productName,
+    pp.productType,
+    df.total_price_after_protection,
+    df.new_payment,
+    mvvi.PROVIDER_NAME,
+    mvvi.PRODUCT_NAME,
+    mvvi.PRODUCT_TYPE
+FROM
+    deal_products dp
+LEFT JOIN
+    deal_finalpayment df ON dp.deal_number = df.deal_number
+LEFT JOIN
+    pen_products pp ON dp.productID = pp.productID
+LEFT JOIN
+    menu_vin_view_items mvvi ON dp.template_item_id = mvvi.ID
+WHERE
+(dp.productID != 0 OR dp.productID = 0)
+GROUP BY
+    pp.productName, pp.productType, df.total_price_after_protection, df.new_payment, mvvi.PROVIDER_NAME, mvvi.PRODUCT_NAME, mvvi.PRODUCT_TYPE;`;
 
   connection.query(sql, (err, results) => {
     if (err) throw err;
@@ -188,7 +207,8 @@ router.post("/reports", (req, res) => {
   let completedRequests = 0; // To track when all requests are done
 
   userIds.forEach((userId) => {
-    let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${userId}');`;
+    let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}','${userId}');`;
+    console.log(financeQuery);
 
     let reportQuery = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${userId}');`;
 
