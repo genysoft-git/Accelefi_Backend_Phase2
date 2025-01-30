@@ -125,6 +125,9 @@ router.post("/closeDeal", (req, res) => {
     date,
     outsideLender,
     vehicleType,
+    location,
+    organization,
+    user,
   } = req.body;
   let sql_query;
   if (selectedButton === "close") {
@@ -137,17 +140,17 @@ router.post("/closeDeal", (req, res) => {
     if (err) throw err;
     if (results.affectedRows === 1) {
       const sql_query = `insert into closed_deal (
-      back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,lease_reserve,front_gross,lender,loan_to_value,notes,qulified_unit,reserve_method,reserve_method_value,sales_mgr,sales_person,
+      back_gross,buy_rate,credit_score,deal_no,finance_mgr,finance_reserve,lease_reserve,location,organization,closed_by,front_gross,lender,loan_to_value,notes,qulified_unit,reserve_method,reserve_method_value,sales_mgr,sales_person,
       sell_rate,total_gross,vehicle_value,value_method,rate_deviation_reason,closed_deal_date,is_out_side_lender,out_side_lender,vehicle_type)
       values (
-      '${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown}',${financeReserve},${leaseReserve},${frontGross},'${lender}','${loanToValue}','${notes}','${qualifiedUnit}','${selectedValue}','${reserve_amount}','${salesManagerDropdown}','${salesPersonDropdown}',${sellRate},${totalGross},${vehicleValue},'${valueMethod}','${selectedReason}','${new Date(
+      '${backGross}',${buyRate},${creditScore},'${dealNumber}','${financeManagerDropdown}',${financeReserve},${leaseReserve},${location},${organization},${user},${frontGross},'${lender}','${loanToValue}','${notes}','${qualifiedUnit}','${selectedValue}','${reserve_amount}','${salesManagerDropdown}','${salesPersonDropdown}',${sellRate},${totalGross},${vehicleValue},'${valueMethod}','${selectedReason}','${new Date(
         date
       )
         .toISOString()
         .slice(0, 10)
         .replace("T", " ")}','${outsideLender.isYesChecked ? "Yes" : "No"}','${
         outsideLender.outSideLender
-      }','${vehicleType}') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},finance_reserve=${leaseReserve},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
+      }','${vehicleType}') on duplicate key update back_gross='${backGross}',buy_rate=${buyRate},credit_score=${creditScore},finance_mgr='${financeManagerDropdown}',finance_reserve=${financeReserve},lease_reserve=${leaseReserve},location=${location},organization=${organization},closed_by=${user},front_gross=${frontGross},lender='${lender}',loan_to_value='${loanToValue}',notes='${notes}',qulified_unit='${qualifiedUnit}',reserve_method='${selectedValue}',reserve_method_value='${reserve_amount}',sales_mgr='${salesManagerDropdown}',sales_person='${salesPersonDropdown}',sell_rate=${sellRate},total_gross=${totalGross},vehicle_value=${vehicleValue},value_method='${valueMethod}',rate_deviation_reason='${selectedReason}',closed_deal_date='${new Date(
         date
       )
         .toISOString()
@@ -193,8 +196,14 @@ router.post("/reactive", (req, res) => {
 router.post("/reports", (req, res) => {
   console.log(req.body);
 
-  const { startDate, endDate, purchaseType, vehicleType, createdUserId } =
-    req.body;
+  const {
+    startDate,
+    endDate,
+    purchaseType,
+    vehicleType,
+    createdUserId,
+    location,
+  } = req.body;
   console.log(req.body);
 
   const formattedStartDate = new Date(startDate).toISOString().slice(0, 10);
@@ -210,7 +219,7 @@ router.post("/reports", (req, res) => {
     let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}','${userId}');`;
     console.log(financeQuery);
 
-    let reportQuery = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${userId}');`;
+    let reportQuery = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${userId}','${location}');`;
 
     let financeResult = null;
     let reportResult = null;
