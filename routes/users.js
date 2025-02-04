@@ -14,10 +14,12 @@ router.get("/", function (req, res, next) {
   concat(b.user_Firstname,' ',b.user_Lastname) as SalesPerson,
   if (a.customer_Status=1,'Active','InActive') as Status,
   a.customer_Purchasetype,
-  a.customer_Miles,a.customer_Msrp
+  a.customer_Miles,a.customer_Msrp,ml.purchase_lenderid,ml.purchase_lendername,ml.book_forusedcarvalue
 FROM customerverification a
 join user b on a.customer_Createdby=b.id
 join customerverification_tradeinfo CT on CT.customerverification_id=a.customer_Id
+join dael_lender_map dlm on a.customer_Id=dlm.deal_id
+ join master_lender ml on dlm.lender_id=ml.purchase_lenderid
 `;
 
   connection.query(sql, (err, results) => {
