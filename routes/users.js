@@ -8,18 +8,14 @@ router.get("/", function (req, res, next) {
   a.customer_Make,
   a.customer_Model,
   a.customer_Stylename,a.customer_TotalAmountFinanced,a.residual_value,a.customer_Term,CT.customer_trademake,CT.customer_tradeyear,CT.customer_trademodel,CT.customer_Trademiles,
-  Date(a.customer_Dealdate) as Date,
-  a.customer_Vin,a.customer_Dealnumber ,a.customer_Vehicletype,
-  concat(b.user_Firstname,' ',b.user_Lastname) as FinanaceMgr,
-  concat(b.user_Firstname,' ',b.user_Lastname) as SalesPerson,
-  if (a.customer_Status=1,'Active','InActive') as Status,
-  a.customer_Purchasetype,
-  a.customer_Miles,a.customer_Msrp,ml.purchase_lenderid,ml.purchase_lendername,ml.book_forusedcarvalue
+  Date(a.customer_Dealdate) as Date,  a.customer_Vin,a.customer_Dealnumber ,a.customer_Vehicletype,  concat(b.user_Firstname,' ',b.user_Lastname) as FinanaceMgr,
+  concat(b.user_Firstname,' ',b.user_Lastname) as SalesPerson,  if (a.customer_Status=1,'Active','InActive') as Status,  a.customer_Purchasetype,  a.customer_Miles,a.customer_Msrp,
+  ml.purchase_lenderid,ml.purchase_lendername,ml.book_forusedcarvalue
 FROM customerverification a
 join user b on a.customer_Createdby=b.id
 join customerverification_tradeinfo CT on CT.customerverification_id=a.customer_Id
-join dael_lender_map dlm on a.customer_Id=dlm.deal_id
- join master_lender ml on dlm.lender_id=ml.purchase_lenderid
+left join dael_lender_map dlm on a.customer_Id=dlm.deal_id
+left join master_lender ml on dlm.lender_id=ml.purchase_lenderid
 `;
 
   connection.query(sql, (err, results) => {
@@ -218,7 +214,7 @@ router.post("/reports", (req, res) => {
   let completedRequests = 0; // To track when all requests are done
 
   userIds.forEach((userId) => {
-    let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}','${userId}');`;
+    let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}','${userId}','${location}');`;
     console.log(financeQuery);
 
     let reportQuery = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${userId}','${location}');`;
