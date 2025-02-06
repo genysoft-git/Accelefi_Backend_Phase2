@@ -192,8 +192,6 @@ router.post("/reactive", (req, res) => {
 });
 
 router.post("/reports", (req, res) => {
-  console.log(req.body);
-
   const {
     startDate,
     endDate,
@@ -201,13 +199,12 @@ router.post("/reports", (req, res) => {
     vehicleType,
     createdUserId,
     location,
+    qualified,
   } = req.body;
-  console.log(req.body);
 
   const formattedStartDate = new Date(startDate).toISOString().slice(0, 10);
   const formattedEndDate = new Date(endDate).toISOString().slice(0, 10);
   const userIds = createdUserId.split(","); // Split createdUserId into an array
-  console.log(userIds);
 
   const results = {}; // Key-value pair to store responses for each user
 
@@ -215,7 +212,6 @@ router.post("/reports", (req, res) => {
 
   userIds.forEach((userId) => {
     let financeQuery = `CALL GetFinance('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}','${userId}','${location}');`;
-    console.log(financeQuery);
 
     let reportQuery = `CALL GetReports('${formattedStartDate}','${formattedEndDate}','${purchaseType}','${vehicleType}',@use_qualified_count,@new_qualified_count,@new_finance_count,@used_finance_count,@new_cash_count,@used_cash_count,@lease_count,@used_count,@new_count,@new_financeReserve,@used_financeReserve,@qualified_new_cash_deals , @qualified_used_cash_deals , @qualified_new_finance_deals , @qualified_used_finance_deals , @qualified_lease_deals , @total_new_cash_deal , @total_used_cash_deal , @total_new_finance_deal , @total_used_finance_deal , @total_new_lease_deal,'${userId}','${location}');`;
 
@@ -265,8 +261,6 @@ router.post("/reports", (req, res) => {
 });
 
 router.post("/org", (req, res) => {
-  console.log(req.body);
-
   const { id, org } = req.body;
   let user_Role = null;
   let sql_query = `select * from user where id=${id}`;
@@ -279,7 +273,6 @@ router.post("/org", (req, res) => {
     } else {
       query = `select id,org_name from manage_organization where is_deleted=0 and id=${org}`;
     }
-    console.log(query);
 
     connection.query(query, (err, results) => {
       if (err) throw err;
