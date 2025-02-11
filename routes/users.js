@@ -315,7 +315,7 @@ WHERE U.user_Role IN (9, 7, 11,2)
   AND EXISTS (
     SELECT 1
     FROM closed_deal CD
-    WHERE CD.finance_mgr = CONCAT(U.user_Firstname, ' ', U.user_Lastname)
+    WHERE CD.closed_by = U.id
   );`;
   connection.query(dealership_query, (err, results) => {
     if (err) throw err;
